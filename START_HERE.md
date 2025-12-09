@@ -213,6 +213,9 @@ This removes:
 
 ## 🔍 Quick Troubleshooting
 
+### Installation error: "externally-managed-environment"?
+This is fixed in the latest version of the script. The script now uses `--break-system-packages` for pipenv installation, which is safe. See [UBUNTU_24_NOTES.md](UBUNTU_24_NOTES.md) for details.
+
 ### Service won't start?
 ```bash
 sudo journalctl -u vcf-credential-manager -n 50

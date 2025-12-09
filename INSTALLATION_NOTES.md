@@ -2,6 +2,38 @@
 
 ## Important Notes About This Installation
 
+### Ubuntu 24.04 and PEP 668
+
+Ubuntu 24.04 implements PEP 668, which prevents installing Python packages system-wide using pip to avoid conflicts with system packages. You may see this error:
+
+```
+error: externally-managed-environment
+× This environment is externally managed
+```
+
+**How the script handles this:**
+
+The installation script uses `pip3 install --break-system-packages pipenv` to install pipenv. This is safe because:
+
+1. **Pipenv creates isolated environments**: All application dependencies are installed in a virtual environment (`.venv`)
+2. **No system package conflicts**: The application's packages don't interfere with system Python packages
+3. **Standard practice**: This is the recommended approach for tools like pipenv that manage virtual environments
+
+**Alternative solutions:**
+
+```bash
+# Option 1: Use --break-system-packages (what the script does)
+pip3 install --break-system-packages pipenv
+
+# Option 2: Use system package (if available)
+apt-get install python3-pipenv
+
+# Option 3: Install in user space
+pip3 install --user pipenv
+```
+
+The script uses Option 1 as it's the most reliable across different Ubuntu 24.04 configurations.
+
 ### Chroot Jail Implementation
 
 The installation script includes code for setting up a chroot jail environment, but this functionality is **commented out by default** for the following reasons:

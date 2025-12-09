@@ -291,6 +291,38 @@ sudo netstat -tlnp | grep :443
 
 The output should show `0.0.0.0:443` not `127.0.0.1:443`.
 
+### Installation Error: "externally-managed-environment"
+
+If you see this error during installation:
+
+```
+error: externally-managed-environment
+× This environment is externally managed
+```
+
+**Solution:** The installation script has been updated to handle Ubuntu 24.04's PEP 668 restriction. Make sure you're using the latest version of the script.
+
+The script now uses `pip3 install --break-system-packages pipenv` which is safe because:
+- Pipenv creates isolated virtual environments
+- It doesn't interfere with system packages
+- The application runs in its own `.venv` directory
+
+If you still encounter issues, you can manually install pipenv:
+
+```bash
+# Option 1: Use --break-system-packages (recommended)
+sudo pip3 install --break-system-packages pipenv
+
+# Option 2: Use system package (if available)
+sudo apt-get install python3-pipenv
+
+# Option 3: Install in user space
+pip3 install --user pipenv
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Then re-run the installation script.
+
 ## Uninstallation
 
 To completely remove the VCF Credential Manager:

@@ -97,8 +97,10 @@ install_dependencies() {
         curl \
         wget
     
-    # Install pipenv
-    pip3 install --upgrade pipenv
+    # Install pipenv - use --break-system-packages for Ubuntu 24.04
+    # This is safe because pipenv will create isolated virtual environments
+    log_info "Installing pipenv..."
+    pip3 install --break-system-packages --upgrade pipenv
     
     log_success "System dependencies installed"
 }

@@ -17,6 +17,7 @@
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture and design (28K)
 - **[TESTING.md](TESTING.md)** - Comprehensive testing checklist (6.0K)
 - **[INSTALLATION_NOTES.md](INSTALLATION_NOTES.md)** - Advanced configuration notes (12K)
+- **[UBUNTU_24_NOTES.md](UBUNTU_24_NOTES.md)** - Ubuntu 24.04 specific notes (PEP 668)
 
 ---
 
