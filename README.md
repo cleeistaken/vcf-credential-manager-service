@@ -215,6 +215,51 @@ sudo systemctl restart vcf-credential-manager
 
 ## Troubleshooting
 
+### Service Hangs with "Got notification message from PID" Error
+
+If the service hangs during startup with this error:
+
+```
+Got notification message from PID XXXX, but reception only permitted for main PID YYYY
+```
+
+**Cause:** The systemd service was configured with `Type=notify`, but Gunicorn with multiple workers doesn't properly support the systemd notify protocol.
+
+**Solution:** The installation script has been updated to use `Type=exec` instead.
+
+**Manual fix if needed:**
+
+```bash
+# Stop the service
+sudo systemctl stop vcf-credential-manager
+
+# Edit the service file
+sudo nano /etc/systemd/system/vcf-credential-manager.service
+
+# Change: Type=notify
+# To:     Type=exec
+
+# Add after ExecStart line:
+# PIDFile=/opt/vcf-credential-manager/gunicorn.pid
+
+# Reload systemd
+sudo systemctl daemon-reload
+
+# Update the startup script to use exec and create PID file
+sudo nano /opt/vcf-credential-manager/scripts/run_gunicorn_https_443.sh
+
+# Change the last command from:
+# pipenv run gunicorn ...
+# To:
+# exec pipenv run gunicorn \
+#     ... (existing options) \
+#     --pid gunicorn.pid \
+#     ... (rest of options)
+
+# Start the service
+sudo systemctl start vcf-credential-manager
+```
+
 ### Service Won't Start
 
 1. **Check the service status:**

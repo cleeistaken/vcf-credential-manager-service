@@ -333,11 +333,12 @@ cd "$APP_DIR"
 
 # Activate pipenv environment and run gunicorn
 export PIPENV_VENV_IN_PROJECT=1
-pipenv run gunicorn \
+exec pipenv run gunicorn \
     --config gunicorn_config.py \
     --bind 0.0.0.0:443 \
     --certfile ssl/cert.pem \
     --keyfile ssl/key.pem \
+    --pid gunicorn.pid \
     --access-logfile logs/gunicorn_access.log \
     --error-logfile logs/gunicorn_error.log \
     app:app
@@ -359,7 +360,7 @@ After=network.target
 Wants=network-online.target
 
 [Service]
-Type=notify
+Type=exec
 User=root
 Group=root
 WorkingDirectory=${INSTALL_DIR}
@@ -369,6 +370,9 @@ Environment="PYTHONUNBUFFERED=1"
 
 # Use the custom script that runs on port 443
 ExecStart=${INSTALL_DIR}/scripts/run_gunicorn_https_443.sh
+
+# PID file for proper process tracking
+PIDFile=${INSTALL_DIR}/gunicorn.pid
 
 # Restart policy
 Restart=always

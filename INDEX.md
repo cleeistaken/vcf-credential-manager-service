@@ -8,10 +8,11 @@
 3. **[INSTALLATION_NOTES.md](INSTALLATION_NOTES.md)** - Important considerations and alternatives
 
 ### 🛠️ Installation & Setup
-- **[install-vcf-credential-manager.sh](install-vcf-credential-manager.sh)** - Main installation script (15K)
+- **[install-vcf-credential-manager.sh](install-vcf-credential-manager.sh)** - Main installation script (16K)
 - **[uninstall-vcf-credential-manager.sh](uninstall-vcf-credential-manager.sh)** - Complete removal script (5.0K)
 - **[fix-permissions.sh](fix-permissions.sh)** - Fix permission issues (3.5K)
-- **[vcf-credential-manager.service.template](vcf-credential-manager.service.template)** - Systemd service template (1.1K)
+- **[fix-service-type.sh](fix-service-type.sh)** - Fix service type/PID issues (3.5K)
+- **[vcf-credential-manager.service.template](vcf-credential-manager.service.template)** - Systemd service template (1.2K)
 
 ### 📚 Documentation
 - **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** - Project overview and features (10K)

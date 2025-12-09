@@ -229,7 +229,97 @@ Since the main process runs as root, it needs write access to logs and database 
 
 ---
 
-## Issue 5: Service Won't Start
+## Issue 5: Service Hangs with "Got notification message from PID" Error
+
+### Error Message
+
+```
+vcf-credential-manager.service: Got notification message from PID 5987, but reception only permitted for main PID 5983
+```
+
+The service appears to hang and never fully starts.
+
+### Cause
+
+The systemd service was configured with `Type=notify`, which expects the main process to send a notification when ready. However, Gunicorn with multiple workers doesn't properly support the systemd notify protocol, causing confusion about which PID is the main process.
+
+### Solution (Automatic)
+
+✅ **The latest version of the installation script fixes this automatically.**
+
+The script now:
+1. Uses `Type=exec` instead of `Type=notify`
+2. Uses `exec` to replace the shell process with gunicorn
+3. Creates a PID file for proper process tracking
+
+### Manual Fix
+
+If you encounter this error:
+
+```bash
+# Stop the service
+sudo systemctl stop vcf-credential-manager
+
+# Edit the service file
+sudo nano /etc/systemd/system/vcf-credential-manager.service
+
+# Change line: Type=notify
+# To:          Type=exec
+
+# Add this line after ExecStart:
+# PIDFile=/opt/vcf-credential-manager/gunicorn.pid
+
+# Save and exit (Ctrl+X, Y, Enter)
+
+# Edit the startup script
+sudo nano /opt/vcf-credential-manager/scripts/run_gunicorn_https_443.sh
+
+# Change the last command from:
+# pipenv run gunicorn \
+#     --config gunicorn_config.py \
+#     ...
+
+# To:
+# exec pipenv run gunicorn \
+#     --config gunicorn_config.py \
+#     --bind 0.0.0.0:443 \
+#     --certfile ssl/cert.pem \
+#     --keyfile ssl/key.pem \
+#     --pid gunicorn.pid \
+#     --access-logfile logs/gunicorn_access.log \
+#     --error-logfile logs/gunicorn_error.log \
+#     app:app
+
+# Save and exit
+
+# Reload systemd configuration
+sudo systemctl daemon-reload
+
+# Start the service
+sudo systemctl start vcf-credential-manager
+
+# Verify it's running
+sudo systemctl status vcf-credential-manager
+```
+
+### Understanding the Fix
+
+**Type=exec vs Type=notify:**
+- `Type=notify`: Process must send notification via sd_notify() when ready
+- `Type=exec`: systemd considers service started when main process is running
+
+**exec command:**
+- Replaces the shell process with gunicorn
+- Ensures gunicorn is PID 1 in the service
+- Prevents PID confusion
+
+**PID file:**
+- Helps systemd track the main process
+- Useful for service management
+
+---
+
+## Issue 6: Service Won't Start
 
 ### Error Message
 
@@ -304,7 +394,7 @@ sudo systemctl restart vcf-credential-manager
 
 ---
 
-## Issue 6: Database Errors
+## Issue 7: Database Errors
 
 ### Error Message
 
@@ -334,7 +424,7 @@ sudo systemctl start vcf-credential-manager
 
 ---
 
-## Issue 7: SSL Certificate Errors
+## Issue 8: SSL Certificate Errors
 
 ### Error Message
 
@@ -368,7 +458,7 @@ sudo systemctl start vcf-credential-manager
 
 ---
 
-## Issue 8: Cannot Access from Remote Host
+## Issue 9: Cannot Access from Remote Host
 
 ### Symptoms
 
@@ -402,7 +492,7 @@ grep "bind" /opt/vcf-credential-manager/scripts/run_gunicorn_https_443.sh
 
 ---
 
-## Issue 9: Pipenv Installation Fails
+## Issue 10: Pipenv Installation Fails
 
 ### Error Message
 
