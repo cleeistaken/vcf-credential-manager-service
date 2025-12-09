@@ -355,6 +355,28 @@ sudo -u vcfcredmgr PIPENV_VENV_IN_PROJECT=1 PIPENV_PYTHON=3 pipenv install --ski
 sudo systemctl restart vcf-credential-manager
 ```
 
+### Installation Error: "destination is not write-able"
+
+If you see this error:
+
+```
+✘ Failed creating virtual environment
+virtualenv: error: argument dest: the destination . is not write-able at /opt/vcf-credential-manager
+```
+
+**Solution:** The installation script has been updated to set proper ownership before creating the virtual environment.
+
+**Manual fix if needed:**
+
+```bash
+# Set proper ownership
+sudo chown -R vcfcredmgr:vcfcredmgr /opt/vcf-credential-manager
+
+# Retry creating the virtual environment
+cd /opt/vcf-credential-manager
+sudo -u vcfcredmgr PIPENV_VENV_IN_PROJECT=1 PIPENV_PYTHON=3 pipenv install --skip-lock
+```
+
 ## Uninstallation
 
 To completely remove the VCF Credential Manager:

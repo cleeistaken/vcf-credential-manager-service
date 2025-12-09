@@ -154,6 +154,10 @@ setup_python_environment() {
     PYTHON_VERSION=$(python3 --version | awk '{print $2}')
     log_info "System Python version: $PYTHON_VERSION"
     
+    # Ensure proper ownership before creating virtual environment
+    log_info "Setting ownership for Python environment setup..."
+    chown -R "$APP_USER:$APP_GROUP" "$INSTALL_DIR"
+    
     # Check if Pipfile exists and modify it to use system Python
     if [[ -f "Pipfile" ]]; then
         log_info "Configuring Pipfile to use system Python..."
@@ -163,6 +167,9 @@ setup_python_environment() {
         # Update Pipfile to use system Python version (remove specific version requirement)
         sed -i 's/python_version = .*/python_version = "3.12"/' Pipfile || true
         sed -i 's/python_full_version = .*//' Pipfile || true
+        
+        # Ensure modified files have correct ownership
+        chown "$APP_USER:$APP_GROUP" Pipfile Pipfile.original
     fi
     
     # Install dependencies using pipenv with system Python

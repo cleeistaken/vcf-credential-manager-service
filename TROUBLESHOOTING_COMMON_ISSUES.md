@@ -130,7 +130,53 @@ See [UBUNTU_24_NOTES.md](UBUNTU_24_NOTES.md) for detailed explanation.
 
 ---
 
-## Issue 3: Service Won't Start
+## Issue 3: "Failed creating virtual environment" / "destination is not write-able"
+
+### Error Message
+
+```
+✘ Failed creating virtual environment
+virtualenv: error: argument dest: the destination . is not write-able at /opt/vcf-credential-manager
+```
+
+### Cause
+
+The directory ownership wasn't set correctly before pipenv tried to create the virtual environment.
+
+### Solution (Automatic)
+
+✅ **The latest version of the installation script fixes this automatically.**
+
+The script now sets ownership before creating the virtual environment:
+```bash
+chown -R vcfcredmgr:vcfcredmgr /opt/vcf-credential-manager
+```
+
+### Manual Fix
+
+If you encounter this error:
+
+```bash
+# Set proper ownership
+sudo chown -R vcfcredmgr:vcfcredmgr /opt/vcf-credential-manager
+
+# Navigate to the directory
+cd /opt/vcf-credential-manager
+
+# Retry creating the virtual environment
+sudo -u vcfcredmgr PIPENV_VENV_IN_PROJECT=1 PIPENV_PYTHON=3 pipenv install --skip-lock
+
+# Continue with the rest of the installation
+sudo systemctl restart vcf-credential-manager
+```
+
+### Prevention
+
+The installation script now ensures proper ownership at the right time in the installation sequence.
+
+---
+
+## Issue 4: Service Won't Start
 
 ### Error Message
 
@@ -205,7 +251,7 @@ sudo systemctl restart vcf-credential-manager
 
 ---
 
-## Issue 4: Database Errors
+## Issue 5: Database Errors
 
 ### Error Message
 
@@ -235,7 +281,7 @@ sudo systemctl start vcf-credential-manager
 
 ---
 
-## Issue 5: SSL Certificate Errors
+## Issue 6: SSL Certificate Errors
 
 ### Error Message
 
@@ -269,7 +315,7 @@ sudo systemctl start vcf-credential-manager
 
 ---
 
-## Issue 6: Cannot Access from Remote Host
+## Issue 7: Cannot Access from Remote Host
 
 ### Symptoms
 
@@ -303,7 +349,7 @@ grep "bind" /opt/vcf-credential-manager/scripts/run_gunicorn_https_443.sh
 
 ---
 
-## Issue 7: Pipenv Installation Fails
+## Issue 8: Pipenv Installation Fails
 
 ### Error Message
 
