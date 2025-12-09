@@ -50,6 +50,7 @@ The script will:
 - Clone the VCF Credential Manager repository to `/opt/vcf-credential-manager`
 - Set up Python environment with pipenv
 - Generate self-signed SSL certificates
+- Create custom startup script (`start_https_443.sh`) for port 443
 - Configure the application to run on port 443
 - Create and enable a systemd service
 - Configure firewall rules
@@ -75,9 +76,8 @@ https://localhost
 ```
 /opt/vcf-credential-manager/          # Main application directory
 ├── app.py                            # Flask application
-├── scripts/
-│   ├── run_gunicorn_https_443.sh    # Custom startup script (port 443)
-│   └── run_gunicorn_https.sh        # Original startup script
+├── start_https.sh                    # Original startup script
+├── start_https_443.sh                # Custom startup script (port 443)
 ├── ssl/
 │   ├── cert.pem                      # SSL certificate
 │   └── key.pem                       # SSL private key

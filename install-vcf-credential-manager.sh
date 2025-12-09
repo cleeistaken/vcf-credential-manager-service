@@ -307,29 +307,27 @@ EOF
     log_success "Chroot wrapper script created"
 }
 
-# Modify run_gunicorn_https.sh to use port 443
+# Create custom startup script for port 443
 configure_gunicorn_script() {
-    log_info "Configuring Gunicorn HTTPS script for port 443..."
+    log_info "Creating custom Gunicorn HTTPS script for port 443..."
     
-    # Check if the script exists
-    if [[ ! -f "$INSTALL_DIR/scripts/run_gunicorn_https.sh" ]]; then
-        log_error "run_gunicorn_https.sh not found in scripts directory"
-        exit 1
+    # Check if the original startup script exists (now in root directory)
+    if [[ ! -f "$INSTALL_DIR/start_https.sh" ]]; then
+        log_warning "start_https.sh not found, creating custom script"
+    else
+        # Make the original script executable
+        chmod +x "$INSTALL_DIR/start_https.sh"
     fi
     
-    # Make it executable
-    chmod +x "$INSTALL_DIR/scripts/run_gunicorn_https.sh"
-    
     # Create a custom version that binds to 0.0.0.0:443
-    cat > "$INSTALL_DIR/scripts/run_gunicorn_https_443.sh" << 'EOF'
+    cat > "$INSTALL_DIR/start_https_443.sh" << 'EOF'
 #!/bin/bash
 # Custom Gunicorn HTTPS startup script for port 443
 
 # Get the directory where the script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-APP_DIR="$(dirname "$SCRIPT_DIR")"
 
-cd "$APP_DIR"
+cd "$SCRIPT_DIR"
 
 # Activate pipenv environment and run gunicorn
 export PIPENV_VENV_IN_PROJECT=1
@@ -344,7 +342,7 @@ exec pipenv run gunicorn \
     app:app
 EOF
     
-    chmod +x "$INSTALL_DIR/scripts/run_gunicorn_https_443.sh"
+    chmod +x "$INSTALL_DIR/start_https_443.sh"
     
     log_success "Gunicorn script configured for port 443"
 }
@@ -369,7 +367,7 @@ Environment="PIPENV_VENV_IN_PROJECT=1"
 Environment="PYTHONUNBUFFERED=1"
 
 # Use the custom script that runs on port 443
-ExecStart=${INSTALL_DIR}/scripts/run_gunicorn_https_443.sh
+ExecStart=${INSTALL_DIR}/start_https_443.sh
 
 # PID file for proper process tracking
 PIDFile=${INSTALL_DIR}/gunicorn.pid
