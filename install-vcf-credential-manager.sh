@@ -382,10 +382,9 @@ StartLimitBurst=5
 
 # Security settings
 NoNewPrivileges=false
-PrivateTmp=true
-ProtectSystem=strict
+PrivateTmp=false
+ProtectSystem=full
 ProtectHome=true
-ReadWritePaths=${INSTALL_DIR}
 
 # Logging
 StandardOutput=journal

@@ -215,17 +215,19 @@ sudo systemctl restart vcf-credential-manager
 
 ## Troubleshooting
 
-### Service Error: "Read-only file system" in Application Directory
+### Service Error: "Permission denied" for Temporary Files
 
 If the service fails with this error:
 
 ```
-OSError: [Errno 30] Read-only file system: '/opt/vcf-credential-manager/tmpXXXXXX'
+PermissionError: [Errno 13] Permission denied: '/opt/vcf-credential-manager/tmpXXXXXX'
 ```
 
-**Cause:** The systemd service has `ProtectSystem=strict` which makes the filesystem read-only, but `ReadWritePaths` didn't include the entire application directory.
+**Cause:** The systemd service security settings (`ProtectSystem=strict` and `PrivateTmp=true`) were too restrictive for the application's needs.
 
-**Solution:** The installation script has been updated to allow write access to the entire application directory.
+**Solution:** The installation script has been updated to use more appropriate security settings:
+- `ProtectSystem=full` (instead of `strict`) - Allows writes to `/opt` while protecting system directories
+- `PrivateTmp=false` (instead of `true`) - Allows normal temp file operations
 
 **Manual fix if needed:**
 
@@ -236,10 +238,14 @@ sudo systemctl stop vcf-credential-manager
 # Edit the service file
 sudo nano /etc/systemd/system/vcf-credential-manager.service
 
-# Find the line:
-# ReadWritePaths=/opt/vcf-credential-manager/logs /opt/vcf-credential-manager/instance
+# Find and change these lines:
+# FROM: ProtectSystem=strict
+# TO:   ProtectSystem=full
 
-# Change it to:
+# FROM: PrivateTmp=true
+# TO:   PrivateTmp=false
+
+# Remove this line if present:
 # ReadWritePaths=/opt/vcf-credential-manager
 
 # Save and exit (Ctrl+X, Y, Enter)

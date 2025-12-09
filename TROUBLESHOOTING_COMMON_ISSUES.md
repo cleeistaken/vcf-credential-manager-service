@@ -319,30 +319,34 @@ sudo systemctl status vcf-credential-manager
 
 ---
 
-## Issue 6: "Read-only file system" Error in Application Directory
+## Issue 6: "Permission denied" for Temporary Files
 
 ### Error Message
 
 ```
-OSError: [Errno 30] Read-only file system: '/opt/vcf-credential-manager/tmpXXXXXX'
+PermissionError: [Errno 13] Permission denied: '/opt/vcf-credential-manager/tmpXXXXXX'
 File "/usr/lib/python3.12/tempfile.py", line 395, in _mkstemp_inner
+File "/opt/vcf-credential-manager/.venv/lib/python3.12/site-packages/gunicorn/pidfile.py", line 36, in create
 vcf-credential-manager.service: Main process exited, code=exited, status=1/FAILURE
 ```
 
 ### Cause
 
-The systemd service has `ProtectSystem=strict` which makes most of the filesystem read-only for security. The `ReadWritePaths` directive was too restrictive, only allowing writes to specific subdirectories (`logs` and `instance`), but the application needs to create temporary files in the main application directory.
+The systemd service security settings were too restrictive:
+- `ProtectSystem=strict` - Makes entire filesystem read-only except explicitly allowed paths
+- `PrivateTmp=true` - Creates isolated /tmp, but application tries to write to its own directory
+- `ReadWritePaths` - Even with the app directory listed, `strict` mode was still blocking writes
 
 ### Solution (Automatic)
 
 ✅ **The latest version of the installation script fixes this automatically.**
 
-The script now sets:
+The script now uses more appropriate security settings:
 ```ini
-ReadWritePaths=/opt/vcf-credential-manager
+ProtectSystem=full      # Protects /usr, /boot, /efi but allows /opt
+PrivateTmp=false        # Uses system /tmp, allows normal temp operations
+# ReadWritePaths removed (not needed with ProtectSystem=full)
 ```
-
-This allows the application to write anywhere within its own directory while keeping the rest of the system protected.
 
 ### Manual Fix
 
@@ -355,10 +359,15 @@ sudo systemctl stop vcf-credential-manager
 # Edit the service file
 sudo nano /etc/systemd/system/vcf-credential-manager.service
 
-# Find the line (around line 30):
-# ReadWritePaths=/opt/vcf-credential-manager/logs /opt/vcf-credential-manager/instance
+# Find and change these lines in the [Service] section:
 
-# Change it to:
+# FROM: ProtectSystem=strict
+# TO:   ProtectSystem=full
+
+# FROM: PrivateTmp=true
+# TO:   PrivateTmp=false
+
+# Remove this line if present:
 # ReadWritePaths=/opt/vcf-credential-manager
 
 # Save and exit (Ctrl+X, Y, Enter)
@@ -375,23 +384,28 @@ sudo systemctl status vcf-credential-manager
 
 ### Understanding the Security Settings
 
-The systemd service uses several security features:
+**ProtectSystem Levels:**
 
-| Setting | Purpose | Effect |
-|---------|---------|--------|
-| `ProtectSystem=strict` | Makes filesystem read-only | Prevents unauthorized writes |
-| `ProtectHome=true` | Blocks access to home directories | Protects user data |
-| `PrivateTmp=true` | Provides isolated /tmp | Prevents temp file conflicts |
-| `ReadWritePaths=...` | Allows writes to specific paths | Application can function |
+| Level | Protected Directories | Writable Directories | Use Case |
+|-------|----------------------|---------------------|----------|
+| `strict` | Everything except explicit paths | Only ReadWritePaths | Maximum security, complex config |
+| `full` | `/usr`, `/boot`, `/efi` | `/etc`, `/var`, `/opt`, etc. | **Recommended for /opt apps** |
+| `true` | `/usr`, `/boot` | `/etc`, `/var`, `/opt`, etc. | Legacy compatibility |
+| `false` | None | Everything | Not recommended |
+
+**Our Configuration:**
+- `ProtectSystem=full` - Protects system directories while allowing `/opt` writes
+- `ProtectHome=true` - Blocks access to user home directories
+- `PrivateTmp=false` - Uses system /tmp (application needs to write to its own directory)
 
 ### Why This is Still Secure
 
-Even with `ReadWritePaths=/opt/vcf-credential-manager`:
-- ✅ Rest of the system is read-only
+Even with relaxed settings:
+- ✅ System directories (`/usr`, `/boot`, `/efi`) are protected
 - ✅ Home directories are protected
-- ✅ System directories are protected
-- ✅ Only the application directory is writable
-- ✅ Application runs with minimal privileges
+- ✅ Application runs with minimal necessary privileges
+- ✅ Only `/opt` and similar directories are writable
+- ✅ Much more secure than running without systemd hardening
 
 ---
 
