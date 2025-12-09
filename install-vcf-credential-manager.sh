@@ -211,6 +211,13 @@ create_directories() {
     mkdir -p "$INSTALL_DIR/instance"
     mkdir -p "$INSTALL_DIR/ssl"
     
+    # Set initial ownership for directories that need to be writable by root
+    # (service runs as root for port 443 binding)
+    chown root:root "$INSTALL_DIR/logs"
+    chown root:root "$INSTALL_DIR/instance"
+    chmod 755 "$INSTALL_DIR/logs"
+    chmod 755 "$INSTALL_DIR/instance"
+    
     log_success "Directories created"
 }
 
@@ -396,11 +403,26 @@ EOF
 set_permissions() {
     log_info "Setting proper permissions..."
     
+    # Set ownership for most files
     chown -R "$APP_USER:$APP_GROUP" "$INSTALL_DIR"
     chmod -R 755 "$INSTALL_DIR"
+    
+    # SSL certificates - restrictive permissions
     chmod 600 "$INSTALL_DIR/ssl/key.pem"
     chmod 644 "$INSTALL_DIR/ssl/cert.pem"
+    
+    # Database - restrictive permissions
     chmod 600 "$INSTALL_DIR/instance/vcf_credentials.db" 2>/dev/null || true
+    
+    # Logs directory - needs to be writable by root (service runs as root for port 443)
+    # Set to root ownership with group write permissions
+    chown -R root:root "$INSTALL_DIR/logs"
+    chmod 755 "$INSTALL_DIR/logs"
+    chmod 644 "$INSTALL_DIR/logs"/*.log 2>/dev/null || true
+    
+    # Instance directory - needs to be writable by root
+    chown -R root:root "$INSTALL_DIR/instance"
+    chmod 755 "$INSTALL_DIR/instance"
     
     # Chroot permissions
     if [[ -d "$CHROOT_DIR" ]]; then

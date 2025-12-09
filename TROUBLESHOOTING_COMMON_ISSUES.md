@@ -176,7 +176,60 @@ The installation script now ensures proper ownership at the right time in the in
 
 ---
 
-## Issue 4: Service Won't Start
+## Issue 4: "logs/gunicorn_error.log isn't writable" / Permission Denied
+
+### Error Message
+
+```
+Error: Error: 'logs/gunicorn_error.log' isn't writable [PermissionError(13, 'Permission denied')]
+vcf-credential-manager.service: Main process exited, code=exited, status=1/FAILURE
+```
+
+### Cause
+
+The systemd service runs as `root` (required to bind to port 443), but the logs and instance directories were owned by the `vcfcredmgr` user, preventing root from writing to them.
+
+### Solution (Automatic)
+
+✅ **The latest version of the installation script fixes this automatically.**
+
+The script now:
+1. Creates logs and instance directories with root ownership
+2. Sets proper permissions (755) for these directories
+3. Ensures the service can write logs and database files
+
+### Manual Fix
+
+If you encounter this error:
+
+```bash
+# Fix logs directory permissions
+sudo chown -R root:root /opt/vcf-credential-manager/logs
+sudo chmod 755 /opt/vcf-credential-manager/logs
+
+# Fix instance directory permissions  
+sudo chown -R root:root /opt/vcf-credential-manager/instance
+sudo chmod 755 /opt/vcf-credential-manager/instance
+
+# Restart the service
+sudo systemctl restart vcf-credential-manager
+
+# Verify it's running
+sudo systemctl status vcf-credential-manager
+```
+
+### Why Root Ownership?
+
+The service runs as root because:
+- Port 443 is a privileged port (< 1024)
+- Requires root or `CAP_NET_BIND_SERVICE` capability
+- Gunicorn workers inherit the user context
+
+Since the main process runs as root, it needs write access to logs and database directories.
+
+---
+
+## Issue 5: Service Won't Start
 
 ### Error Message
 
@@ -251,7 +304,7 @@ sudo systemctl restart vcf-credential-manager
 
 ---
 
-## Issue 5: Database Errors
+## Issue 6: Database Errors
 
 ### Error Message
 
@@ -281,7 +334,7 @@ sudo systemctl start vcf-credential-manager
 
 ---
 
-## Issue 6: SSL Certificate Errors
+## Issue 7: SSL Certificate Errors
 
 ### Error Message
 
@@ -315,7 +368,7 @@ sudo systemctl start vcf-credential-manager
 
 ---
 
-## Issue 7: Cannot Access from Remote Host
+## Issue 8: Cannot Access from Remote Host
 
 ### Symptoms
 
@@ -349,7 +402,7 @@ grep "bind" /opt/vcf-credential-manager/scripts/run_gunicorn_https_443.sh
 
 ---
 
-## Issue 8: Pipenv Installation Fails
+## Issue 9: Pipenv Installation Fails
 
 ### Error Message
 

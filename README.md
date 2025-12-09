@@ -377,6 +377,37 @@ cd /opt/vcf-credential-manager
 sudo -u vcfcredmgr PIPENV_VENV_IN_PROJECT=1 PIPENV_PYTHON=3 pipenv install --skip-lock
 ```
 
+### Service Error: "logs/gunicorn_error.log isn't writable"
+
+If the service fails to start with this error:
+
+```
+Error: 'logs/gunicorn_error.log' isn't writable [PermissionError(13, 'Permission denied')]
+```
+
+**Solution:** The installation script has been updated to set proper ownership for logs and instance directories. Since the service runs as root (required for port 443), these directories need root ownership.
+
+**Quick fix - Use the fix script:**
+
+```bash
+sudo ./fix-permissions.sh
+```
+
+**Manual fix if needed:**
+
+```bash
+# Fix logs directory permissions
+sudo chown -R root:root /opt/vcf-credential-manager/logs
+sudo chmod 755 /opt/vcf-credential-manager/logs
+
+# Fix instance directory permissions
+sudo chown -R root:root /opt/vcf-credential-manager/instance
+sudo chmod 755 /opt/vcf-credential-manager/instance
+
+# Restart the service
+sudo systemctl restart vcf-credential-manager
+```
+
 ## Uninstallation
 
 To completely remove the VCF Credential Manager:
