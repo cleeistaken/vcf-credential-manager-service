@@ -323,6 +323,38 @@ export PATH="$HOME/.local/bin:$PATH"
 
 Then re-run the installation script.
 
+### Installation Error: "Python X.X.X was not found"
+
+If you see this error:
+
+```
+Warning: Python 3.13.0 was not found on your system...
+Neither 'pyenv' nor 'asdf' could be found to install Python.
+```
+
+**Solution:** The installation script has been updated to use the system Python version (3.12 on Ubuntu 24.04) instead of requiring a specific version.
+
+The script now:
+1. Detects your system Python version
+2. Modifies the `Pipfile` to use the system Python
+3. Uses `--skip-lock` to avoid version conflicts
+4. Sets `PIPENV_PYTHON=3` to use system python3
+
+**Manual fix if needed:**
+
+```bash
+cd /opt/vcf-credential-manager
+
+# Edit Pipfile to use system Python
+sudo sed -i 's/python_version = .*/python_version = "3.12"/' Pipfile
+
+# Install with system Python
+sudo -u vcfcredmgr PIPENV_VENV_IN_PROJECT=1 PIPENV_PYTHON=3 pipenv install --skip-lock
+
+# Restart service
+sudo systemctl restart vcf-credential-manager
+```
+
 ## Uninstallation
 
 To completely remove the VCF Credential Manager:

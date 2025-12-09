@@ -216,6 +216,9 @@ This removes:
 ### Installation error: "externally-managed-environment"?
 This is fixed in the latest version of the script. The script now uses `--break-system-packages` for pipenv installation, which is safe. See [UBUNTU_24_NOTES.md](UBUNTU_24_NOTES.md) for details.
 
+### Installation error: "Python X.X.X was not found"?
+This is fixed in the latest version. The script automatically configures the app to use Ubuntu 24.04's Python 3.12. See [UBUNTU_24_NOTES.md](UBUNTU_24_NOTES.md) for details.
+
 ### Service won't start?
 ```bash
 sudo journalctl -u vcf-credential-manager -n 50

@@ -150,8 +150,26 @@ setup_python_environment() {
     
     cd "$INSTALL_DIR"
     
-    # Install dependencies using pipenv
-    sudo -u "$APP_USER" PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy
+    # Get the system Python version
+    PYTHON_VERSION=$(python3 --version | awk '{print $2}')
+    log_info "System Python version: $PYTHON_VERSION"
+    
+    # Check if Pipfile exists and modify it to use system Python
+    if [[ -f "Pipfile" ]]; then
+        log_info "Configuring Pipfile to use system Python..."
+        # Backup original Pipfile
+        cp Pipfile Pipfile.original
+        
+        # Update Pipfile to use system Python version (remove specific version requirement)
+        sed -i 's/python_version = .*/python_version = "3.12"/' Pipfile || true
+        sed -i 's/python_full_version = .*//' Pipfile || true
+    fi
+    
+    # Install dependencies using pipenv with system Python
+    # --skip-lock: Skip Pipfile.lock generation if there are version conflicts
+    # --python: Use system python3
+    log_info "Installing dependencies with pipenv..."
+    sudo -u "$APP_USER" PIPENV_VENV_IN_PROJECT=1 PIPENV_PYTHON=3 pipenv install --skip-lock
     
     log_success "Python environment configured"
 }

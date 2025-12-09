@@ -18,6 +18,7 @@
 - **[TESTING.md](TESTING.md)** - Comprehensive testing checklist (6.0K)
 - **[INSTALLATION_NOTES.md](INSTALLATION_NOTES.md)** - Advanced configuration notes (12K)
 - **[UBUNTU_24_NOTES.md](UBUNTU_24_NOTES.md)** - Ubuntu 24.04 specific notes (PEP 668)
+- **[TROUBLESHOOTING_COMMON_ISSUES.md](TROUBLESHOOTING_COMMON_ISSUES.md)** - Quick fix guide for common problems
 
 ---
 

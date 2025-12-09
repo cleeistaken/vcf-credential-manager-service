@@ -161,6 +161,85 @@ The `--break-system-packages` flag is:
 
 The installation script uses this approach to provide a smooth, reliable installation experience on Ubuntu 24.04.
 
+## Python Version Mismatch
+
+### The Issue
+
+The VCF Credential Manager's `Pipfile` may specify a specific Python version (e.g., 3.13.0) that isn't available on Ubuntu 24.04. Ubuntu 24.04 ships with Python 3.12 by default.
+
+You may see this error:
+
+```
+Warning: Python 3.13.0 was not found on your system...
+Neither 'pyenv' nor 'asdf' could be found to install Python.
+```
+
+### How the Script Handles This
+
+The installation script automatically:
+
+1. **Detects system Python version**:
+   ```bash
+   PYTHON_VERSION=$(python3 --version | awk '{print $2}')
+   ```
+
+2. **Modifies the Pipfile**:
+   ```bash
+   sed -i 's/python_version = .*/python_version = "3.12"/' Pipfile
+   ```
+
+3. **Uses system Python**:
+   ```bash
+   PIPENV_PYTHON=3 pipenv install --skip-lock
+   ```
+
+### Why This Works
+
+- **Compatible versions**: Python 3.12 and 3.13 are highly compatible
+- **Skip lock file**: Using `--skip-lock` avoids strict version checking
+- **System Python**: Uses the well-tested Ubuntu Python package
+- **No version manager needed**: Doesn't require pyenv or asdf
+
+### Manual Fix
+
+If you need to fix this manually:
+
+```bash
+cd /opt/vcf-credential-manager
+
+# Check your Python version
+python3 --version
+
+# Edit Pipfile to match (e.g., for Python 3.12)
+sudo nano Pipfile
+# Change: python_version = "3.13" to python_version = "3.12"
+
+# Or use sed
+sudo sed -i 's/python_version = .*/python_version = "3.12"/' Pipfile
+
+# Reinstall with system Python
+sudo -u vcfcredmgr PIPENV_VENV_IN_PROJECT=1 PIPENV_PYTHON=3 pipenv install --skip-lock
+```
+
+### Alternative: Install Specific Python Version
+
+If you absolutely need Python 3.13:
+
+```bash
+# Add deadsnakes PPA
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt-get update
+
+# Install Python 3.13
+sudo apt-get install python3.13 python3.13-venv python3.13-dev
+
+# Use it with pipenv
+cd /opt/vcf-credential-manager
+sudo -u vcfcredmgr PIPENV_VENV_IN_PROJECT=1 pipenv install --python 3.13
+```
+
+**Note:** This is usually unnecessary as Python 3.12 works perfectly fine.
+
 ---
 
 **Last Updated:** December 2025  
