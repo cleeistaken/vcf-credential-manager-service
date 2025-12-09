@@ -215,6 +215,42 @@ sudo systemctl restart vcf-credential-manager
 
 ## Troubleshooting
 
+### Service Error: "Read-only file system" in Application Directory
+
+If the service fails with this error:
+
+```
+OSError: [Errno 30] Read-only file system: '/opt/vcf-credential-manager/tmpXXXXXX'
+```
+
+**Cause:** The systemd service has `ProtectSystem=strict` which makes the filesystem read-only, but `ReadWritePaths` didn't include the entire application directory.
+
+**Solution:** The installation script has been updated to allow write access to the entire application directory.
+
+**Manual fix if needed:**
+
+```bash
+# Stop the service
+sudo systemctl stop vcf-credential-manager
+
+# Edit the service file
+sudo nano /etc/systemd/system/vcf-credential-manager.service
+
+# Find the line:
+# ReadWritePaths=/opt/vcf-credential-manager/logs /opt/vcf-credential-manager/instance
+
+# Change it to:
+# ReadWritePaths=/opt/vcf-credential-manager
+
+# Save and exit (Ctrl+X, Y, Enter)
+
+# Reload systemd
+sudo systemctl daemon-reload
+
+# Start the service
+sudo systemctl start vcf-credential-manager
+```
+
 ### Service Hangs with "Got notification message from PID" Error
 
 If the service hangs during startup with this error:

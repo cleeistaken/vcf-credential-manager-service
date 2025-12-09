@@ -385,7 +385,7 @@ NoNewPrivileges=false
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=${INSTALL_DIR}/logs ${INSTALL_DIR}/instance
+ReadWritePaths=${INSTALL_DIR}
 
 # Logging
 StandardOutput=journal

@@ -319,7 +319,83 @@ sudo systemctl status vcf-credential-manager
 
 ---
 
-## Issue 6: Service Won't Start
+## Issue 6: "Read-only file system" Error in Application Directory
+
+### Error Message
+
+```
+OSError: [Errno 30] Read-only file system: '/opt/vcf-credential-manager/tmpXXXXXX'
+File "/usr/lib/python3.12/tempfile.py", line 395, in _mkstemp_inner
+vcf-credential-manager.service: Main process exited, code=exited, status=1/FAILURE
+```
+
+### Cause
+
+The systemd service has `ProtectSystem=strict` which makes most of the filesystem read-only for security. The `ReadWritePaths` directive was too restrictive, only allowing writes to specific subdirectories (`logs` and `instance`), but the application needs to create temporary files in the main application directory.
+
+### Solution (Automatic)
+
+✅ **The latest version of the installation script fixes this automatically.**
+
+The script now sets:
+```ini
+ReadWritePaths=/opt/vcf-credential-manager
+```
+
+This allows the application to write anywhere within its own directory while keeping the rest of the system protected.
+
+### Manual Fix
+
+If you encounter this error:
+
+```bash
+# Stop the service
+sudo systemctl stop vcf-credential-manager
+
+# Edit the service file
+sudo nano /etc/systemd/system/vcf-credential-manager.service
+
+# Find the line (around line 30):
+# ReadWritePaths=/opt/vcf-credential-manager/logs /opt/vcf-credential-manager/instance
+
+# Change it to:
+# ReadWritePaths=/opt/vcf-credential-manager
+
+# Save and exit (Ctrl+X, Y, Enter)
+
+# Reload systemd configuration
+sudo systemctl daemon-reload
+
+# Start the service
+sudo systemctl start vcf-credential-manager
+
+# Verify it's running
+sudo systemctl status vcf-credential-manager
+```
+
+### Understanding the Security Settings
+
+The systemd service uses several security features:
+
+| Setting | Purpose | Effect |
+|---------|---------|--------|
+| `ProtectSystem=strict` | Makes filesystem read-only | Prevents unauthorized writes |
+| `ProtectHome=true` | Blocks access to home directories | Protects user data |
+| `PrivateTmp=true` | Provides isolated /tmp | Prevents temp file conflicts |
+| `ReadWritePaths=...` | Allows writes to specific paths | Application can function |
+
+### Why This is Still Secure
+
+Even with `ReadWritePaths=/opt/vcf-credential-manager`:
+- ✅ Rest of the system is read-only
+- ✅ Home directories are protected
+- ✅ System directories are protected
+- ✅ Only the application directory is writable
+- ✅ Application runs with minimal privileges
+
+---
+
+## Issue 7: Service Won't Start
 
 ### Error Message
 
@@ -394,7 +470,7 @@ sudo systemctl restart vcf-credential-manager
 
 ---
 
-## Issue 7: Database Errors
+## Issue 8: Database Errors
 
 ### Error Message
 
@@ -424,7 +500,7 @@ sudo systemctl start vcf-credential-manager
 
 ---
 
-## Issue 8: SSL Certificate Errors
+## Issue 9: SSL Certificate Errors
 
 ### Error Message
 
@@ -458,7 +534,7 @@ sudo systemctl start vcf-credential-manager
 
 ---
 
-## Issue 9: Cannot Access from Remote Host
+## Issue 10: Cannot Access from Remote Host
 
 ### Symptoms
 
@@ -492,7 +568,7 @@ grep "bind" /opt/vcf-credential-manager/scripts/run_gunicorn_https_443.sh
 
 ---
 
-## Issue 10: Pipenv Installation Fails
+## Issue 11: Pipenv Installation Fails
 
 ### Error Message
 
