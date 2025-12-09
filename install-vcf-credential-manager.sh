@@ -406,8 +406,9 @@ EOF
 set_permissions() {
     log_info "Setting proper permissions..."
     
-    # Set ownership for most files
-    chown -R "$APP_USER:$APP_GROUP" "$INSTALL_DIR"
+    # Since the service runs as root (for port 443), set root ownership for the entire directory
+    # This allows root to write temp files, PID files, etc.
+    chown -R root:root "$INSTALL_DIR"
     chmod -R 755 "$INSTALL_DIR"
     
     # SSL certificates - restrictive permissions
@@ -417,20 +418,16 @@ set_permissions() {
     # Database - restrictive permissions
     chmod 600 "$INSTALL_DIR/instance/vcf_credentials.db" 2>/dev/null || true
     
-    # Logs directory - needs to be writable by root (service runs as root for port 443)
-    # Set to root ownership with group write permissions
-    chown -R root:root "$INSTALL_DIR/logs"
+    # Logs directory
     chmod 755 "$INSTALL_DIR/logs"
     chmod 644 "$INSTALL_DIR/logs"/*.log 2>/dev/null || true
     
-    # Instance directory - needs to be writable by root
-    chown -R root:root "$INSTALL_DIR/instance"
+    # Instance directory
     chmod 755 "$INSTALL_DIR/instance"
     
     # Chroot permissions
     if [[ -d "$CHROOT_DIR" ]]; then
         chown -R root:root "$CHROOT_DIR"
-        chown -R "$APP_USER:$APP_GROUP" "$CHROOT_DIR/opt/$APP_NAME"
     fi
     
     log_success "Permissions set"

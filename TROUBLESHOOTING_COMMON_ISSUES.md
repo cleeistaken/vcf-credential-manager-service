@@ -341,7 +341,9 @@ The systemd service security settings were too restrictive:
 
 ✅ **The latest version of the installation script fixes this automatically.**
 
-The script now uses more appropriate security settings:
+The script now:
+1. Sets the entire application directory to `root:root` ownership (service runs as root)
+2. Uses appropriate security settings:
 ```ini
 ProtectSystem=full      # Protects /usr, /boot, /efi but allows /opt
 PrivateTmp=false        # Uses system /tmp, allows normal temp operations
@@ -356,19 +358,21 @@ If you encounter this error:
 # Stop the service
 sudo systemctl stop vcf-credential-manager
 
+# Fix directory ownership (CRITICAL - service runs as root)
+sudo chown -R root:root /opt/vcf-credential-manager
+sudo chmod -R 755 /opt/vcf-credential-manager
+
+# Fix SSL permissions
+sudo chmod 600 /opt/vcf-credential-manager/ssl/key.pem
+sudo chmod 644 /opt/vcf-credential-manager/ssl/cert.pem
+
 # Edit the service file
 sudo nano /etc/systemd/system/vcf-credential-manager.service
 
-# Find and change these lines in the [Service] section:
-
-# FROM: ProtectSystem=strict
-# TO:   ProtectSystem=full
-
-# FROM: PrivateTmp=true
-# TO:   PrivateTmp=false
-
-# Remove this line if present:
-# ReadWritePaths=/opt/vcf-credential-manager
+# Ensure these settings in the [Service] section:
+# ProtectSystem=full
+# PrivateTmp=false
+# (Remove ReadWritePaths line if present)
 
 # Save and exit (Ctrl+X, Y, Enter)
 
@@ -380,6 +384,12 @@ sudo systemctl start vcf-credential-manager
 
 # Verify it's running
 sudo systemctl status vcf-credential-manager
+```
+
+**Or use the automated fix script:**
+
+```bash
+sudo ./fix-permissions.sh
 ```
 
 ### Understanding the Security Settings

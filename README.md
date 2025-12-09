@@ -223,11 +223,18 @@ If the service fails with this error:
 PermissionError: [Errno 13] Permission denied: '/opt/vcf-credential-manager/tmpXXXXXX'
 ```
 
-**Cause:** The systemd service security settings (`ProtectSystem=strict` and `PrivateTmp=true`) were too restrictive for the application's needs.
+**Cause:** The application directory had incorrect ownership. The service runs as `root` (required for port 443), but the directory was owned by the `vcfcredmgr` user.
 
-**Solution:** The installation script has been updated to use more appropriate security settings:
-- `ProtectSystem=full` (instead of `strict`) - Allows writes to `/opt` while protecting system directories
-- `PrivateTmp=false` (instead of `true`) - Allows normal temp file operations
+**Solution:** The installation script has been updated to:
+1. Set the entire application directory to `root:root` ownership
+2. Use `ProtectSystem=full` (allows writes to `/opt`)
+3. Use `PrivateTmp=false` (allows normal temp operations)
+
+**Quick fix - Use the fix script:**
+
+```bash
+sudo ./fix-permissions.sh
+```
 
 **Manual fix if needed:**
 
@@ -235,25 +242,24 @@ PermissionError: [Errno 13] Permission denied: '/opt/vcf-credential-manager/tmpX
 # Stop the service
 sudo systemctl stop vcf-credential-manager
 
+# Fix directory ownership
+sudo chown -R root:root /opt/vcf-credential-manager
+sudo chmod -R 755 /opt/vcf-credential-manager
+
+# Fix SSL permissions
+sudo chmod 600 /opt/vcf-credential-manager/ssl/key.pem
+sudo chmod 644 /opt/vcf-credential-manager/ssl/cert.pem
+
 # Edit the service file
 sudo nano /etc/systemd/system/vcf-credential-manager.service
 
-# Find and change these lines:
-# FROM: ProtectSystem=strict
-# TO:   ProtectSystem=full
+# Ensure these settings:
+# ProtectSystem=full
+# PrivateTmp=false
+# (Remove ReadWritePaths line if present)
 
-# FROM: PrivateTmp=true
-# TO:   PrivateTmp=false
-
-# Remove this line if present:
-# ReadWritePaths=/opt/vcf-credential-manager
-
-# Save and exit (Ctrl+X, Y, Enter)
-
-# Reload systemd
+# Reload and restart
 sudo systemctl daemon-reload
-
-# Start the service
 sudo systemctl start vcf-credential-manager
 ```
 

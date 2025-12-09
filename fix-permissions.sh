@@ -101,12 +101,10 @@ if [[ -d "$INSTALL_DIR/ssl" ]]; then
 fi
 
 # Fix application files ownership
-log_info "Fixing application files ownership..."
-chown -R "$APP_USER:$APP_GROUP" "$INSTALL_DIR"
-
-# Re-apply specific permissions for directories that need root access
-chown -R root:root "$INSTALL_DIR/logs"
-chown -R root:root "$INSTALL_DIR/instance"
+# Since the service runs as root (for port 443), set root ownership
+log_info "Fixing application files ownership to root..."
+chown -R root:root "$INSTALL_DIR"
+chmod -R 755 "$INSTALL_DIR"
 
 log_success "Application files ownership fixed"
 
